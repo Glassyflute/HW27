@@ -1,5 +1,12 @@
+import json
+
 from django.http import JsonResponse
-from django.shortcuts import render
+from django.utils.decorators import method_decorator
+from django.views import View
+from django.views.decorators.csrf import csrf_exempt
+from django.views.generic import DetailView
+
+from ads.models import Ad, Category
 
 
 def index(request):
@@ -9,48 +16,105 @@ def index(request):
 
 
 @method_decorator(csrf_exempt, name="dispatch")
-class VacancyView(View):
+class AdAllView(View):
     def get(self, request):
-        vacancies = Vacancy.objects.all()
-
-        search_text = request.GET.get("text", None)
-        if search_text:
-            vacancies = vacancies.filter(text=search_text)
+        ads = Ad.objects.all()
 
         response = []
-        for vacancy in vacancies:
+        for ad in ads:
             response.append(
                 {
-                    "id": vacancy.id,
-                    "text": vacancy.text
+                    "id": ad.pk,
+                    "name": ad.name,
+                    "author": ad.author,
+                    "price": ad.price,
+                    "description": ad.description,
+                    "address": ad.address,
+                    "is_published": ad.is_published
                 }
             )
 
         return JsonResponse(response, safe=False)
 
     def post(self, request):
-        vacancy_data = json.loads(request.body)
+        ad_data = json.loads(request.body)
 
-        vacancy = Vacancy()
-        vacancy.text = vacancy_data["text"]
+        ad = Ad()
+        ad.name = ad_data["name"]
+        ad.author = ad_data["author"]
+        ad.price = ad_data["price"]
+        ad.description = ad_data["description"]
+        ad.address = ad_data["address"]
+        ad.is_published = ad_data["is_published"]
 
-        vacancy.save()
+        ad.save()
 
         return JsonResponse({
-                    "id": vacancy.id,
-                    "text": vacancy.text
+                    "id": ad.pk,
+                    "name": ad.name,
+                    "author": ad.author,
+                    "price": ad.price,
+                    "description": ad.description,
+                    "address": ad.address,
+                    "is_published": ad.is_published
                 })
 
 
-class VacancyDetailView(DetailView):
-     model = Vacancy
+class AdDetailView(DetailView):
+     model = Ad
 
      def get(self, request, *args, **kwargs):
-        vacancy = self.get_object()
+        ad = self.get_object()
 
         return JsonResponse({
-            "id": vacancy.id,
-            "text": vacancy.text
+            "id": ad.pk,
+            "name": ad.name,
+            "author": ad.author,
+            "price": ad.price,
+            "description": ad.description,
+            "address": ad.address,
+            "is_published": ad.is_published
         })
 
+
+@method_decorator(csrf_exempt, name="dispatch")
+class CategoryAllView(View):
+    def get(self, request):
+        categories = Category.objects.all()
+
+        response = []
+        for category in categories:
+            response.append(
+                {
+                    "id": category.pk,
+                    "name": category.name
+                }
+            )
+
+        return JsonResponse(response, safe=False)
+
+    def post(self, request):
+        categ_data = json.loads(request.body)
+
+        category = Category()
+        category.name = categ_data["name"]
+
+        category.save()
+
+        return JsonResponse({
+                    "id": category.pk,
+                    "name": category.name
+                })
+
+
+class CategoryDetailView(DetailView):
+     model = Category
+
+     def get(self, request, *args, **kwargs):
+        category = self.get_object()
+
+        return JsonResponse({
+            "id": category.pk,
+            "name": category.name
+        })
 
